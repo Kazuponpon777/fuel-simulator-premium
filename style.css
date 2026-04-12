@@ -1,0 +1,85 @@
+@layer components {
+    .glass-card {
+        background: rgba(255, 255, 255, 0.4);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+    }
+    .dark .glass-card {
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+    }
+
+    .result-card {
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .result-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+    }
+
+    .input-mini {
+        transition: border-color 0.2s;
+    }
+    .input-mini:focus {
+        outline: none;
+        border-color: #6366f1;
+    }
+
+    .badge-neutral {
+        background: rgba(203, 213, 225, 0.2);
+        color: #64748b;
+        border: 1px solid rgba(203, 213, 225, 0.4);
+    }
+    .badge-up {
+        background: rgba(239, 68, 68, 0.1);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+    .badge-down {
+        background: rgba(37, 99, 235, 0.1);
+        color: #2563eb;
+        border: 1px solid rgba(37, 99, 235, 0.2);
+    }
+
+    @keyframes pulse-slow {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.01); }
+    }
+    .animate-pulse-slow {
+        animation: pulse-slow 4s infinite ease-in-out;
+    }
+}
+
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
+/* GSAP Animated Elements Initial State */
+.reveal-up {
+    opacity: 0;
+    transform: translateY(20px);
+}

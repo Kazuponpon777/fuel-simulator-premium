@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ja" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交通費支給単価シミュレーター | Premium</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f4ff',
+                            100: '#e1e9ff',
+                            200: '#c7d6ff',
+                            300: '#a1bbff',
+                            400: '#7395ff',
+                            500: '#4a69ff',
+                            600: '#2563eb', // Standard Indigo-ish
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        },
+                        glass: {
+                            light: 'rgba(255, 255, 255, 0.7)',
+                            dark: 'rgba(15, 23, 42, 0.7)'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        display: ['Outfit', 'sans-serif'],
+                    },
+                    backdropBlur: {
+                        xs: '2px',
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js & GSAP -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300 font-sans">
+
+    <!-- Navbar -->
+    <nav class="sticky top-0 z-50 backdrop-blur-md bg-white/70 dark:bg-slate-900/70 border-b border-slate-200 dark:border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-primary-500 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/20">
+                        <i class="fas fa-car-side text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <span class="text-xl font-bold tracking-tight font-display bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-500 dark:from-white dark:to-slate-400">
+                            Fuel Simulator
+                        </span>
+                        <span class="hidden sm:block text-[10px] text-slate-400 font-medium uppercase tracking-widest leading-none mt-0.5">Premium Edition</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="themeToggle" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                        <i class="fas fa-moon text-slate-500 dark:text-slate-400 dark:hidden text-lg"></i>
+                        <i class="fas fa-sun text-slate-400 hidden dark:block text-lg"></i>
+                    </button>
+                    <div class="text-xs font-semibold px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                        愛知県 <span class="mx-1">•</span> 2026.04
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- Left Sidebar: Inputs & Settings -->
+            <aside class="lg:col-span-4 space-y-6">
+                <!-- Data Source Card -->
+                <div class="glass-card p-6 border border-white/20 dark:border-slate-800 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl rounded-3xl shadow-xl">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-lg font-bold font-display flex items-center">
+                            <span class="w-1.5 h-6 bg-primary-500 rounded-full mr-3"></span>
+                            基準価格の設定
+                        </h2>
+                        <span class="text-[10px] bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 px-2 py-0.5 rounded font-bold uppercase tracking-wider">LIVE</span>
+                    </div>
+
+                    <button onclick="fetchLatestData()" id="fetchBtn" class="group w-full mb-6 relative overflow-hidden bg-primary-600 hover:bg-primary-700 text-white py-3.5 px-4 rounded-2xl transition-all duration-300 shadow-lg shadow-primary-500/25 flex justify-center items-center">
+                        <div class="absolute inset-x-0 bottom-0 h-1 bg-white/20 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300"></div>
+                        <i class="fas fa-sync-alt mr-2 text-sm transition-transform group-hover:rotate-180 duration-500" id="syncIcon"></i>
+                        <span class="font-bold text-sm">官公庁データから最新取得</span>
+                    </button>
+
+                    <div class="space-y-5">
+                        <div class="group">
+                            <label for="gasPrice" class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">レギュラーガソリン価格</label>
+                            <div class="relative">
+                                <input type="number" id="gasPrice" value="159.5" step="0.1" 
+                                    class="w-full bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-2xl py-4 pl-5 pr-14 text-2xl font-bold font-display focus:border-primary-500 focus:ring-0 transition-all outline-none" 
+                                    oninput="calculate()">
+                                <div class="absolute inset-y-0 right-0 pr-5 flex items-center pointer-events-none">
+                                    <span class="text-sm font-bold text-slate-400">円/L</span>
+                                </div>
+                            </div>
+                            <p class="text-[10px] text-slate-400 mt-2 flex items-center px-1">
+                                <i class="fas fa-info-circle mr-1.5 opacity-70"></i> 経済産業省 石油製品価格調査
+                            </p>
+                        </div>
+
+                        <div class="group">
+                            <label for="elecPrice" class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">新電力料金目安単価</label>
+                            <div class="relative">
+                                <input type="number" id="elecPrice" value="31" step="0.1"
+                                    class="w-full bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-2xl py-4 pl-5 pr-20 text-2xl font-bold font-display focus:border-emerald-500 focus:ring-0 transition-all outline-none" 
+                                    oninput="calculate()">
+                                <div class="absolute inset-y-0 right-0 pr-5 flex items-center pointer-events-none">
+                                    <span class="text-sm font-bold text-slate-400">円/kWh</span>
+                                </div>
+                            </div>
+                            <p class="text-[10px] text-slate-400 mt-2 flex items-center px-1">
+                                <i class="fas fa-info-circle mr-1.5 opacity-70"></i> 全国家庭電気製品公正取引協議会
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Customization Panel -->
+                <div class="bg-indigo-50 dark:bg-slate-900 border border-indigo-100 dark:border-slate-800 rounded-3xl p-6">
+                    <button id="toggleSettings" class="w-full flex items-center justify-between text-left focus:outline-none group">
+                        <div class="flex items-center">
+                            <i class="fas fa-sliders-h text-indigo-500 dark:text-indigo-400 mr-3"></i>
+                            <span class="text-sm font-bold text-indigo-900 dark:text-indigo-300">基準燃費のカスタマイズ</span>
+                        </div>
+                        <i class="fas fa-chevron-down text-xs text-indigo-300 transition-transform group-[.active]:rotate-180"></i>
+                    </button>
+                    <div id="settingsPanel" class="mt-5 space-y-4 hidden opacity-0 transition-all duration-300">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mb-1 block">自動車 (km/L)</label>
+                                <input type="number" id="baseAuto" value="15.4" step="0.1" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-sm font-bold input-mini" oninput="calculate()">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mb-1 block">EV (km/kWh)</label>
+                                <input type="number" id="baseEv" value="7.4" step="0.1" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2 text-sm font-bold input-mini" oninput="calculate()">
+                            </div>
+                        </div>
+                        <div class="pt-2">
+                             <p class="text-[10px] text-indigo-400 opacity-80 leading-relaxed italic">
+                                * 社内平均燃費等に合わせて調整可能です。
+                             </p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Right Side: Results & Chart -->
+            <div class="lg:col-span-8 space-y-8">
+                
+                <!-- Results Grid -->
+                <div class="bg-white dark:bg-slate-900 rounded-[2.5rem] p-6 sm:p-8 shadow-2xl shadow-slate-200 dark:shadow-none border border-slate-100 dark:border-slate-800/50">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                        <div>
+                            <h2 class="text-2xl font-bold font-display text-slate-800 dark:text-white flex items-center">
+                                <i class="fas fa-calculator text-primary-500 mr-4"></i>算出結果
+                            </h2>
+                            <p class="text-xs text-slate-400 mt-1">現行規定との差額をリアルタイム判定</p>
+                        </div>
+                        <button onclick="copyResults()" class="group px-6 py-3 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-2xl transition-all duration-300 flex items-center text-sm font-bold border border-slate-200 dark:border-slate-700 shadow-sm">
+                            <i class="far fa-copy mr-2.5 group-hover:scale-110 transition-transform"></i>
+                            <span>結果をコピー</span>
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        
+                        <!-- Auto -->
+                        <div class="result-card p-6 bg-slate-50 dark:bg-slate-800/40 rounded-3xl border border-transparent hover:border-primary-500/30 transition-all duration-500 group">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="flex items-center">
+                                    <span class="w-8 h-8 rounded-lg bg-white dark:bg-slate-700 flex items-center justify-center text-primary-500 shadow-sm mr-3">
+                                        <i class="fas fa-car text-xs"></i>
+                                    </span>
+                                    <span class="text-sm font-bold text-slate-600 dark:text-slate-300">自動車</span>
+                                </div>
+                                <span id="badgeAuto" class="badge-neutral text-[10px] font-bold px-2 py-1 rounded-full">±0円</span>
+                            </div>
+                            <div class="flex justify-between items-end">
+                                <div>
+                                    <span class="text-4xl font-bold font-display text-slate-900 dark:text-white" id="resultAuto">0</span>
+                                    <span class="text-sm font-bold text-slate-400 ml-1">円/km</span>
+                                </div>
+                                <div class="text-right text-[10px] font-bold text-slate-400 leading-tight">
+                                    <div class="opacity-60 mb-1">現行: 11.0円</div>
+                                    <div class="text-primary-500" id="calcAuto">159.5 ÷ 15.4</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bike -->
+                        <div class="result-card p-6 bg-slate-50 dark:bg-slate-800/40 rounded-3xl border border-transparent hover:border-amber-500/30 transition-all duration-500 group">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="flex items-center">
+                                    <span class="w-8 h-8 rounded-lg bg-white dark:bg-slate-700 flex items-center justify-center text-amber-500 shadow-sm mr-3">
+                                        <i class="fas fa-motorcycle text-xs"></i>
+                                    </span>
+                                    <span class="text-sm font-bold text-slate-600 dark:text-slate-300">バイク</span>
+                                </div>
+                                <span id="badgeBike" class="badge-neutral text-[10px] font-bold px-2 py-1 rounded-full">±0円</span>
+                            </div>
+                            <div class="flex justify-between items-end">
+                                <div>
+                                    <span class="text-4xl font-bold font-display text-slate-900 dark:text-white" id="resultBike">0</span>
+                                    <span class="text-sm font-bold text-slate-400 ml-1">円/km</span>
+                                </div>
+                                <div class="text-right text-[10px] font-bold text-slate-400 leading-tight">
+                                    <div class="opacity-60 mb-1">現行: 7.4円</div>
+                                    <div class="text-amber-500" id="calcBike">159.5 ÷ 22.8</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- EV -->
+                        <div class="result-card p-6 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-3xl border border-emerald-100/50 dark:border-emerald-900/20 group animate-pulse-slow">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="flex items-center">
+                                    <span class="w-8 h-8 rounded-lg bg-white dark:bg-emerald-800/30 flex items-center justify-center text-emerald-500 shadow-sm mr-3">
+                                        <i class="fas fa-charging-station text-xs"></i>
+                                    </span>
+                                    <span class="text-sm font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">EV</span>
+                                </div>
+                                <span id="badgeEv" class="badge-neutral text-[10px] font-bold px-2 py-1 rounded-full">±0円</span>
+                            </div>
+                            <div class="flex justify-between items-end">
+                                <div>
+                                    <span class="text-4xl font-bold font-display text-emerald-600 dark:text-emerald-400" id="resultEv">0</span>
+                                    <span class="text-sm font-bold text-emerald-500/60 ml-1">円/km</span>
+                                </div>
+                                <div class="text-right text-[10px] font-bold text-emerald-500/60 leading-tight">
+                                    <div class="opacity-60 mb-1">現行: 4.1円</div>
+                                    <div id="calcEv">31.0 ÷ 7.4</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- PHEV -->
+                        <div class="result-card p-6 bg-primary-500 rounded-3xl border border-primary-400 shadow-xl shadow-primary-500/25 group">
+                            <div class="flex justify-between items-start mb-4 text-white">
+                                <div class="flex items-center">
+                                    <span class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center text-white mr-3">
+                                        <i class="fas fa-bolt text-xs"></i>
+                                    </span>
+                                    <span class="text-sm font-bold tracking-widest uppercase">PHEV</span>
+                                </div>
+                                <span id="badgePhev" class="bg-white/20 text-white text-[10px] font-bold px-2 py-1 rounded-full">±0円</span>
+                            </div>
+                            <div class="flex justify-between items-end text-white">
+                                <div>
+                                    <span class="text-4xl font-bold font-display" id="resultPhev">0</span>
+                                    <span class="text-sm font-bold opacity-70 ml-1">円/km</span>
+                                </div>
+                                <div class="text-right text-[10px] font-bold opacity-70 leading-tight">
+                                    <div class="mb-1">現行: 7.5円</div>
+                                    <div id="calcPhev">Avg(Auto, EV)</div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Analysis Chart -->
+                <div class="bg-white dark:bg-slate-900 rounded-[2.5rem] p-6 sm:p-8 shadow-xl border border-slate-100 dark:border-slate-800">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+                        <div>
+                            <h2 class="text-lg font-bold font-display text-slate-800 dark:text-white">
+                                ガソリン価格の推移と予測
+                            </h2>
+                            <p class="text-xs text-slate-400 mt-1">愛知県 レギュラーガソリン (過去12ヶ月)</p>
+                        </div>
+                        <div class="flex items-center space-x-2 bg-slate-50 dark:bg-slate-800 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase">12ヶ月平均:</span>
+                            <span id="avgPrice" class="text-sm font-display font-bold text-primary-600 underline decoration-primary-500/30 underline-offset-4">0.0</span>
+                            <span class="text-[10px] font-bold text-slate-400">円/L</span>
+                        </div>
+                    </div>
+                    <div class="h-64 sm:h-80 w-full">
+                        <canvas id="priceChart"></canvas>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <footer class="py-12 border-t border-slate-200 dark:border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <p class="text-xs text-slate-400 font-medium">
+                &copy; 2026 Fuel Price Simulator Premium. Based on METI Data.
+            </p>
+        </div>
+    </footer>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed bottom-8 left-1/2 -translate-x-1/2 pointer-events-none z-[100]"></div>
+
+    <!-- Scripts -->
+    <script src="app.js"></script>
+</body>
+</html>
