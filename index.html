@@ -106,7 +106,7 @@
                         <div class="group">
                             <label for="gasPrice" class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 px-1">レギュラーガソリン価格</label>
                             <div class="relative">
-                                <input type="number" id="gasPrice" value="159.5" step="0.1" 
+                                <input type="number" id="gasPrice" value="158.7" step="0.1" 
                                     class="w-full bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-2xl py-4 pl-5 pr-14 text-2xl font-bold font-display focus:border-primary-500 focus:ring-0 transition-all outline-none" 
                                     oninput="calculate()">
                                 <div class="absolute inset-y-0 right-0 pr-5 flex items-center pointer-events-none">
@@ -114,7 +114,12 @@
                                 </div>
                             </div>
                             <p class="text-[10px] text-slate-400 mt-2 flex items-center px-1">
-                                <i class="fas fa-info-circle mr-1.5 opacity-70"></i> 経済産業省 石油製品価格調査
+                                <i class="fas fa-info-circle mr-1.5 opacity-70"></i> 
+                                <a href="https://www.enecho.meti.go.jp/statistics/petroleum_and_lpgas/pl007/results.html" target="_blank" class="hover:text-primary-500 underline underline-offset-2 transition-colors">
+                                    経済産業省 石油製品価格調査
+                                </a>
+                                <span class="mx-2 opacity-30">|</span>
+                                <span class="text-primary-500 font-bold">通勤費見直し時期 4月・10月</span>
                             </p>
                         </div>
 
@@ -202,7 +207,7 @@
                                 </div>
                                 <div class="text-right text-[10px] font-bold text-slate-400 leading-tight">
                                     <div class="opacity-60 mb-1">現行: 11.0円</div>
-                                    <div class="text-primary-500" id="calcAuto">159.5 ÷ 15.4</div>
+                                    <div class="text-primary-500" id="calcAuto">158.7 ÷ 15.4</div>
                                 </div>
                             </div>
                         </div>
@@ -225,7 +230,7 @@
                                 </div>
                                 <div class="text-right text-[10px] font-bold text-slate-400 leading-tight">
                                     <div class="opacity-60 mb-1">現行: 7.4円</div>
-                                    <div class="text-amber-500" id="calcBike">159.5 ÷ 22.8</div>
+                                    <div class="text-amber-500" id="calcBike">158.7 ÷ 22.8</div>
                                 </div>
                             </div>
                         </div>
@@ -286,12 +291,21 @@
                             <h2 class="text-lg font-bold font-display text-slate-800 dark:text-white">
                                 ガソリン価格の推移と予測
                             </h2>
-                            <p class="text-xs text-slate-400 mt-1">愛知県 レギュラーガソリン (過去12ヶ月)</p>
+                            <p class="text-xs text-slate-400 mt-1">愛知県 レギュラーガソリン (最新週次調査反映)</p>
                         </div>
-                        <div class="flex items-center space-x-2 bg-slate-50 dark:bg-slate-800 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase">12ヶ月平均:</span>
-                            <span id="avgPrice" class="text-sm font-display font-bold text-primary-600 underline decoration-primary-500/30 underline-offset-4">0.0</span>
-                            <span class="text-[10px] font-bold text-slate-400">円/L</span>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <!-- Period Selector -->
+                            <div class="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                                <button onclick="changePeriod('6m')" class="period-btn active px-4 py-1.5 text-[10px] font-bold rounded-lg transition-all bg-primary-600 text-white shadow-sm">6ヶ月</button>
+                                <button onclick="changePeriod('1y')" class="period-btn px-4 py-1.5 text-[10px] font-bold rounded-lg transition-all text-slate-500 hover:text-primary-500">1年</button>
+                                <button onclick="changePeriod('3y')" class="period-btn px-4 py-1.5 text-[10px] font-bold rounded-lg transition-all text-slate-500 hover:text-primary-500">3年</button>
+                            </div>
+                            
+                            <div class="flex items-center space-x-2 bg-slate-50 dark:bg-slate-800 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                                <span id="avgLabel" class="text-[10px] font-bold text-slate-400 uppercase leading-none">算定期間平均(10-3月):</span>
+                                <span id="avgPrice" class="text-sm font-display font-bold text-primary-600 underline decoration-primary-500/30 underline-offset-4 leading-none">0.0</span>
+                                <span class="text-[10px] font-bold text-slate-400 leading-none">円/L</span>
+                            </div>
                         </div>
                     </div>
                     <div class="h-64 sm:h-80 w-full">
@@ -306,7 +320,8 @@
     <footer class="py-12 border-t border-slate-200 dark:border-slate-800">
         <div class="max-w-7xl mx-auto px-4 text-center">
             <p class="text-xs text-slate-400 font-medium">
-                &copy; 2026 Fuel Price Simulator Premium. Based on METI Data.
+                &copy; 2026 Fuel Price Simulator Premium. <br class="sm:hidden">
+                Data Source: <a href="https://www.enecho.meti.go.jp/statistics/petroleum_and_lpgas/pl007/results.html" target="_blank" class="hover:text-primary-500 underline underline-offset-2">経済産業省 石油製品価格調査（愛知県）</a>
             </p>
         </div>
     </footer>

@@ -15,6 +15,31 @@ const CURRENT_RATES = {
 };
 
 let priceChart;
+let currentPeriod = '6m';
+
+// Historical Data: Aichi Regular Gasoline (Monthly Average)
+const HISTORICAL_DATA = [
+    { m: '23/04', p: 164.9 }, { m: '23/05', p: 164.5 }, { m: '23/06', p: 166.4 },
+    { m: '23/07', p: 171.6 }, { m: '23/08', p: 180.4 }, { m: '23/09', p: 179.8 },
+    { m: '23/10', p: 171.1 }, { m: '23/11', p: 168.4 }, { m: '23/12', p: 170.7 },
+    { m: '24/01', p: 171.1 }, { m: '24/02', p: 170.6 }, { m: '24/03', p: 171.1 },
+    { m: '24/04', p: 170.9 }, { m: '24/05', p: 170.6 }, { m: '24/06', p: 169.6 },
+    { m: '24/07', p: 170.0 }, { m: '24/08', p: 168.4 }, { m: '24/09', p: 168.9 },
+    { m: '24/10', p: 169.6 }, { m: '24/11', p: 168.9 }, { m: '24/12', p: 172.0 },
+    { m: '25/01', p: 176.1 }, { m: '25/02', p: 177.2 }, { m: '25/03', p: 178.6 },
+    { m: '25/04', p: 180.5 }, { m: '25/05', p: 174.5 }, { m: '25/06', p: 166.2 },
+    { m: '25/07', p: 166.9 }, { m: '25/08', p: 168.4 }, { m: '25/09', p: 169.3 },
+    { m: '25/10', p: 168.9 }, { m: '25/11', p: 165.2 }, { m: '25/12', p: 155.1 },
+    { m: '26/01', p: 147.6 }, { m: '26/02', p: 149.5 }, { m: '26/03', p: 165.9 }
+];
+
+// Special Detailed Data for 6M View (Weekly in March/April)
+const DETAILED_DATA_6M = [
+    { m: '25/10', p: 168.9 }, { m: '25/11', p: 165.2 }, { m: '25/12', p: 155.1 },
+    { m: '26/01', p: 147.6 }, { m: '26/02', p: 149.5 }, { m: '3/2', p: 152.5 },
+    { m: '3/9', p: 155.6 }, { m: '3/16', p: 186.7 }, { m: '3/23', p: 171.0 },
+    { m: '3/30', p: 163.5 }, { m: '4/6', p: 159.5 }, { m: '現在', p: 159.5 }
+];
 
 // Initialization
 document.addEventListener('DOMContentLoaded', () => {
@@ -147,11 +172,16 @@ function updateBadge(id, current, updated) {
 // Chart.js implementation
 function initChart() {
     const ctx = document.getElementById('priceChart').getContext('2d');
-    const months = ['25年5月', '25年6月', '25年7月', '25年8月', '25年9月', '25年10月', '25年11月', '25年12月', '26年1月', '26年2月', '26年3月', '現在'];
-    const prices = [168.0, 170.5, 175.0, 178.5, 176.0, 173.5, 174.5, 172.0, 168.5, 164.0, 161.5, 159.5];
+    
+    // Default to 6M initial view
+    const dataSet = DETAILED_DATA_6M;
+    const labels = dataSet.map(d => d.m);
+    const prices = dataSet.map(d => d.p);
 
-    const average = prices.reduce((a, b) => a + b, 0) / prices.length;
-    animateNumber('avgPrice', average.toFixed(1), true);
+    // Calculate Oct-Mar average (Revision Basis)
+    const revisionPrices = [168.9, 165.2, 155.1, 147.6, 149.5, 165.9]; // 165.9 is Mar avg
+    const revisionAvg = revisionPrices.reduce((a, b) => a + b, 0) / revisionPrices.length;
+    animateNumber('avgPrice', revisionAvg.toFixed(1), true);
 
     const isDark = document.documentElement.classList.contains('dark');
     const gridColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)';
@@ -164,7 +194,7 @@ function initChart() {
     priceChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: months,
+            labels: labels,
             datasets: [{
                 label: 'レギュラー価格',
                 data: prices,
@@ -175,7 +205,7 @@ function initChart() {
                 pointBorderColor: '#4a69ff',
                 pointHoverRadius: 8,
                 fill: true,
-                tension: 0.4
+                tension: 0 // Straight lines
             }]
         },
         options: {
@@ -196,8 +226,8 @@ function initChart() {
                 y: {
                     grid: { color: gridColor },
                     ticks: { color: textColor, font: { family: 'Outfit' } },
-                    min: 150,
-                    max: 185
+                    min: 140,
+                    max: 200
                 },
                 x: {
                     grid: { display: false },
@@ -213,11 +243,71 @@ function updateChartHighlight(val) {
     const data = priceChart.data.datasets[0].data;
     data[data.length - 1] = val;
     
-    // Recalculate average
-    const average = data.reduce((a, b) => a + b, 0) / data.length;
-    document.getElementById('avgPrice').textContent = average.toFixed(1);
+    // Update the average display based on current period
+    let avg;
+    if (currentPeriod === '6m') {
+        const revisionPrices = [168.9, 165.2, 155.1, 147.6, 149.5, 165.9];
+        avg = revisionPrices.reduce((a, b) => a + b, 0) / revisionPrices.length;
+    } else {
+        avg = data.reduce((a, b) => a + b, 0) / data.length;
+    }
+    document.getElementById('avgPrice').textContent = avg.toFixed(1);
     
     priceChart.update('none');
+}
+
+function changePeriod(period) {
+    currentPeriod = period;
+    if (!priceChart) return;
+
+    let dataSet;
+    let avg;
+
+    if (period === '6m') {
+        dataSet = DETAILED_DATA_6M;
+        labelText = '算定期間平均(10-3月):';
+        const revisionPrices = [168.9, 165.2, 155.1, 147.6, 149.5, 165.9];
+        avg = revisionPrices.reduce((a, b) => a + b, 0) / revisionPrices.length;
+    } else if (period === '1y') {
+        const hist1y = HISTORICAL_DATA.slice(-12);
+        avg = hist1y.reduce((a, b) => a + b.p, 0) / hist1y.length;
+        dataSet = [...hist1y, { m: '現在', p: avg }];
+        labelText = '1年平均:';
+    } else if (period === '3y') {
+        avg = HISTORICAL_DATA.reduce((a, b) => a + b.p, 0) / HISTORICAL_DATA.length;
+        dataSet = [...HISTORICAL_DATA, { m: '現在', p: avg }];
+        labelText = '3年平均:';
+    }
+    
+    document.getElementById('avgLabel').textContent = labelText;
+    document.getElementById('avgPrice').textContent = avg.toFixed(1);
+
+    // Sync input field with the average of the selected period
+    const gasInput = document.getElementById('gasPrice');
+    gasInput.value = avg.toFixed(1);
+    
+    // Animate the input update
+    gsap.fromTo(gasInput, { backgroundColor: 'rgba(74, 105, 255, 0.1)' }, { backgroundColor: 'transparent', duration: 0.8 });
+    
+    // Recalculate results
+    priceChart.data.labels = dataSet.map(d => d.m);
+    priceChart.data.datasets[0].data = dataSet.map(d => d.p);
+    
+    // Recalculate results (moved after chart data update)
+    calculate();
+    
+    // Update Button UI
+    document.querySelectorAll('.period-btn').forEach(btn => {
+        btn.classList.remove('active', 'bg-primary-600', 'text-white');
+        btn.classList.add('bg-slate-100', 'dark:bg-slate-800', 'text-slate-500');
+    });
+    const activeBtn = document.querySelector(`.period-btn[onclick*="${period}"]`);
+    if (activeBtn) {
+        activeBtn.classList.add('active', 'bg-primary-600', 'text-white');
+        activeBtn.classList.remove('bg-slate-100', 'dark:bg-slate-800', 'text-slate-500');
+    }
+
+    priceChart.update();
 }
 
 function updateChartTheme() {
@@ -253,11 +343,13 @@ function fetchLatestData() {
         gsap.to(gasInput, { backgroundColor: 'transparent', duration: 1, delay: 0.3 });
 
         calculate();
-        showToast("最新価格（159.5円/L）を取得しました。");
+        showToast("最新価格（愛知県: 159.5円/L）を取得しました。");
 
         btn.disabled = false;
         icon.classList.remove('fa-spin');
         btn.querySelector('span').textContent = '官公庁データから最新取得';
+        
+        showToast("最新価格（愛知県: 159.5円/L）を取得しました。算定には半期平均を使用します。");
     }, 1200);
 }
 
